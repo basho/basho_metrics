@@ -1,0 +1,12 @@
+{application, basho_metrics,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { basho_metrics_app, []}},
+  {env, []}
+ ]}.
