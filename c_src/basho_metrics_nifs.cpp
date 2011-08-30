@@ -23,6 +23,7 @@
 #include "histogram_metric.hpp"
 #include "meter_metric.hpp"
 #include <vector>
+#include <cstring>
 
 static ErlNifResourceType* histogram_RESOURCE;
 static ErlNifResourceType* meter_RESOURCE;
