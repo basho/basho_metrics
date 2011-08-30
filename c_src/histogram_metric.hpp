@@ -1,6 +1,6 @@
 // -------------------------------------------------------------------
 //
-// 
+// basho_metrics: fast performance metrics for Erlang. 
 //
 // Copyright (c) 2011 Basho Technologies, Inc. All Rights Reserved.
 //

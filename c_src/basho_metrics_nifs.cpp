@@ -49,6 +49,7 @@ static ERL_NIF_TERM ATOM_MAX;
 static ERL_NIF_TERM ATOM_MEAN;
 static ERL_NIF_TERM ATOM_MEDIAN;
 static ERL_NIF_TERM ATOM_COUNT;
+static ERL_NIF_TERM ATOM_P50;
 static ERL_NIF_TERM ATOM_P95;
 static ERL_NIF_TERM ATOM_P99;
 static ERL_NIF_TERM ATOM_P999;
@@ -69,7 +70,7 @@ static ErlNifFunc nif_funcs[] =
 };
 
 #define ATOM(Id, Value) { Id = enif_make_atom(env, Value); }
-#define STAT_TUPLE(Key, Value) enif_make_tuple2(env, Key, enif_make_long(env, Value))
+#define STAT_TUPLE(Key, Value) enif_make_tuple2(env, Key, enif_make_ulong(env, static_cast<unsigned long>(Value)))
 
 ERL_NIF_TERM histogram_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
@@ -119,18 +120,19 @@ ERL_NIF_TERM histogram_stats(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]
     if (enif_get_resource(env,argv[0],histogram_RESOURCE,(void**)&handle))
     {
         std::vector<double> percentiles;
+        percentiles.push_back(0.500);
         percentiles.push_back(0.950);
         percentiles.push_back(0.990);
-        percentiles.push_back(0.999);
         std::vector<double> scores(handle->p->percentiles(percentiles));
         return enif_make_list7(env, 
                                STAT_TUPLE(ATOM_MIN, handle->p->min()),
                                STAT_TUPLE(ATOM_MAX, handle->p->max()),
                                STAT_TUPLE(ATOM_MEAN, handle->p->mean()),
                                STAT_TUPLE(ATOM_COUNT, handle->p->count()),
-                               STAT_TUPLE(ATOM_P95, scores[0]),
-                               STAT_TUPLE(ATOM_P99, scores[1]),
-                               STAT_TUPLE(ATOM_P999, scores[2]));
+                               STAT_TUPLE(ATOM_P50, scores[0]),
+                               STAT_TUPLE(ATOM_P95, scores[1]),
+                               STAT_TUPLE(ATOM_P99, scores[2]));
+
     }
     else 
         return enif_make_badarg(env);
@@ -233,6 +235,7 @@ static int on_load(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_info)
     ATOM(ATOM_MEAN, "mean");
     ATOM(ATOM_MEDIAN, "median");
     ATOM(ATOM_COUNT, "count");
+    ATOM(ATOM_P50, "p50");
     ATOM(ATOM_P95, "p95");
     ATOM(ATOM_P99, "p99");
     ATOM(ATOM_P999, "p999");

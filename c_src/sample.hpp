@@ -1,6 +1,6 @@
 // -------------------------------------------------------------------
 //
-// XXX
+// basho_metrics: fast performance metrics for Erlang.
 //
 // Copyright (c) 2011 Basho Technologies, Inc. All Rights Reserved.
 //
@@ -127,19 +127,19 @@ private:
 };
 
 
-template <typename IntType=unsigned int>
+template <typename IntType=unsigned long>
 struct uniform_sample 
 {
     uniform_sample(std::size_t reservoir_size)
         : size_(reservoir_size),
           count_(0),
-          values_(reservoir_size, 0.0)
+          values_(reservoir_size, 0)
     {
     }
 public:
     void clear() 
     {
-        std::fill_n(values_.begin(), size_, 0.0);
+        std::fill_n(values_.begin(), size_, 0);
     }
 
     std::size_t size()
