@@ -7,6 +7,5 @@
                   kernel,
                   stdlib
                  ]},
-  {mod, { basho_metrics_app, []}},
   {env, []}
  ]}.

@@ -4,9 +4,6 @@
          histogram_update/2,
          histogram_stats/1,
          histogram_clear/1,
-         counter_new/0,
-         counter_increment/1,
-         counter_value/1,
          meter_new/0,
          meter_update/2,
          meter_tick/1,
@@ -33,15 +30,6 @@ init() ->
                       Path
               end,
     erlang:load_nif(filename:join(PrivDir, ?MODULE), 0).
-
-counter_new() ->
-    ?nif_stub.
-
-counter_increment(_Ref) ->
-    ?nif_stub.
-
-counter_value(_Ref) ->
-    ?nif_stub.
 
 histogram_new() ->
     ?nif_stub.

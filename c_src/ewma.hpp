@@ -23,14 +23,12 @@
 #define EWMA_HPP_
 
 #include <cmath>
-#include <boost/atomic.hpp>
-#include <iostream>
 
 class ewma
 {
-    static const long double NANOS = 1000000000.0;
+    static const double NANOS = 1000000000.0;
 public:
-    explicit ewma(long double alpha, long interval=5)
+    explicit ewma(double alpha, long interval=5)
         : rate_(0.0),
           uncounted_(0),
           alpha_(alpha),
@@ -45,8 +43,8 @@ public:
     void tick()
     {
         std::size_t count = uncounted_;
-        uncounted_.store(0);
-        long double instant_rate = count / interval_;
+        uncounted_ = 0;
+        double instant_rate = count / interval_;
         if (initialized_)
             rate_ += (alpha_ * (instant_rate - rate_));
         else 
@@ -57,16 +55,16 @@ public:
     }
 
 
-    long double rate() const
+    double rate() const
     {
-        return rate_ * (long double)NANOS;
+        return rate_ * (double)NANOS;
     }
 
 private:
-    long double rate_;
-    boost::atomic_uint64_t uncounted_;
-    long double alpha_;
-    long double interval_;
+    double rate_;
+    unsigned int uncounted_;
+    double alpha_;
+    double interval_;
     bool initialized_;
 };
 

@@ -1,6 +1,6 @@
 // -------------------------------------------------------------------
 //
-// 
+// basho_metrics:  fast performance metrics for Erlang. 
 //
 // Copyright (c) 2011 Basho Technologies, Inc. All Rights Reserved.
 //
@@ -19,8 +19,8 @@
 // under the License.
 //
 // -------------------------------------------------------------------
-#ifndef INCL_ELEVELDB_H
-#define INCL_ELEVELDB_H
+#ifndef BASHO_METRICS_NIFS_H_
+#define BASHO_METRICS_NIFS_H_
 
 extern "C" {
 
@@ -30,10 +30,6 @@ ERL_NIF_TERM histogram_update(ErlNifEnv*, int, const ERL_NIF_TERM[]);
 ERL_NIF_TERM histogram_new(ErlNifEnv*, int, const ERL_NIF_TERM[]);
 ERL_NIF_TERM histogram_stats(ErlNifEnv*, int, const ERL_NIF_TERM[]);
 ERL_NIF_TERM histogram_clear(ErlNifEnv*, int, const ERL_NIF_TERM[]);
-
-ERL_NIF_TERM counter_new(ErlNifEnv*, int, const ERL_NIF_TERM[]);
-ERL_NIF_TERM counter_increment(ErlNifEnv*, int, const ERL_NIF_TERM[]);
-ERL_NIF_TERM counter_value(ErlNifEnv*, int, const ERL_NIF_TERM[]);
 
 ERL_NIF_TERM meter_new(ErlNifEnv*, int, const ERL_NIF_TERM[]);
 ERL_NIF_TERM meter_update(ErlNifEnv*, int, const ERL_NIF_TERM[]);
