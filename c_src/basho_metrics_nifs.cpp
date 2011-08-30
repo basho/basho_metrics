@@ -25,13 +25,7 @@
 #include <vector>
 
 static ErlNifResourceType* histogram_RESOURCE;
-static ErlNifResourceType* counter_RESOURCE;
 static ErlNifResourceType* meter_RESOURCE;
-
-struct counter
-{
-    boost::atomic_uint64_t value;
-};
 
 struct meter_handle
 {
@@ -43,17 +37,11 @@ struct histogram_handle
     histogram<> *p;
 };
 
-struct counter_handle
-{
-    counter *p;
-};
-
 // Atoms (initialized in on_load)
 static ERL_NIF_TERM ATOM_TRUE;
 static ERL_NIF_TERM ATOM_FALSE;
 static ERL_NIF_TERM ATOM_OK;
 static ERL_NIF_TERM ATOM_ERROR;
-static ERL_NIF_TERM ATOM_NOT_FOUND;
 static ERL_NIF_TERM ATOM_MIN;
 static ERL_NIF_TERM ATOM_MAX;
 static ERL_NIF_TERM ATOM_MEAN;
@@ -72,9 +60,6 @@ static ErlNifFunc nif_funcs[] =
     {"histogram_update", 2, histogram_update},
     {"histogram_stats", 1, histogram_stats},
     {"histogram_clear", 1, histogram_clear},
-    {"counter_new", 0, counter_new},
-    {"counter_increment", 1, counter_increment},
-    {"counter_value", 1, counter_value},
     {"meter_new", 0, meter_new},
     {"meter_update", 2, meter_update},
     {"meter_tick", 1, meter_tick},
@@ -83,42 +68,6 @@ static ErlNifFunc nif_funcs[] =
 
 #define ATOM(Id, Value) { Id = enif_make_atom(env, Value); }
 #define STAT_TUPLE(Key, Value) enif_make_tuple2(env, Key, enif_make_long(env, Value))
-
-ERL_NIF_TERM counter_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
-{
-    counter_handle* handle = 
-            (counter_handle *)enif_alloc_resource(counter_RESOURCE,
-                                                  sizeof(counter_handle));
-    memset(handle, '\0', sizeof(counter_handle));
-    handle->p = new counter;
-    ERL_NIF_TERM result = enif_make_resource(env, handle);
-    enif_release_resource(handle);
-    return enif_make_tuple2(env, ATOM_OK, result);
-}
-
-ERL_NIF_TERM counter_increment(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
-{
-    counter_handle* handle;
-    if (enif_get_resource(env,argv[0], counter_RESOURCE,(void**)&handle))
-    {
-        ++handle->p->value;
-        return ATOM_OK;
-    }
-    else 
-    {
-        return enif_make_badarg(env);
-    }
-}
-
-ERL_NIF_TERM counter_value(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
-{
-    counter_handle* handle;
-    if (enif_get_resource(env,argv[0], counter_RESOURCE,(void**)&handle))
-        return enif_make_uint64(env, handle->p->value);
-    else 
-        return enif_make_badarg(env);
-}
-
 
 ERL_NIF_TERM histogram_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
@@ -232,7 +181,9 @@ ERL_NIF_TERM meter_stats(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     meter_handle* handle;
     if (enif_get_resource(env,argv[0],meter_RESOURCE,(void**)&handle))
     {
-        return enif_make_list3(env, 
+        return enif_make_list4(env, 
+                               enif_make_tuple2(env,ATOM_COUNT, 
+                                                enif_make_ulong(env, handle->p->count())),
                                enif_make_tuple2(env,ATOM_ONE,
                                                 enif_make_double(env,handle->p->one())),
                                enif_make_tuple2(env,ATOM_FIVE,enif_make_double(env, handle->p->five())),
@@ -254,12 +205,6 @@ static void meter_resource_cleanup(ErlNifEnv* env, void* arg)
     delete handle->p;
 }
 
-static void counter_resource_cleanup(ErlNifEnv* env, void* arg)
-{
-    counter_handle* handle = (counter_handle*)arg;
-    delete handle->p;
-}
-
 static int on_load(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_info)
 {
     ErlNifResourceFlags flags = (ErlNifResourceFlags)
@@ -270,12 +215,6 @@ static int on_load(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_info)
                                                  &histogram_resource_cleanup,
                                                  flags, 
                                                  NULL);
-    counter_RESOURCE = enif_open_resource_type(env, 
-                                               NULL, 
-                                              "counter_resource",
-                                               &counter_resource_cleanup,
-                                               flags, 
-                                               NULL);
     meter_RESOURCE = enif_open_resource_type(env, 
                                              NULL, 
                                              "meter_resource",
@@ -287,7 +226,6 @@ static int on_load(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_info)
     ATOM(ATOM_ERROR, "error");
     ATOM(ATOM_TRUE, "true");
     ATOM(ATOM_FALSE, "false");
-    ATOM(ATOM_NOT_FOUND, "not_found");
     ATOM(ATOM_MIN, "min");
     ATOM(ATOM_MAX, "max");
     ATOM(ATOM_MEAN, "mean");
