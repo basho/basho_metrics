@@ -22,6 +22,7 @@
 #include "basho_metrics_nifs.h"
 #include "histogram_metric.hpp"
 #include "meter_metric.hpp"
+#include <cmath>
 #include <vector>
 
 static ErlNifResourceType* histogram_RESOURCE;

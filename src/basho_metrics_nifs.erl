@@ -61,8 +61,8 @@ meter_tick(_Ref) ->
 -ifdef(TEST).
 
 simple_test() ->
-    {ok, H} = ?MODULE:histogram_new();
-    [?MODULE:update(H, lists:seq(0, 1000000))],
-    ?debugFmt("~p~n", [?MODULE:stats(H)]).
+    {ok, H} = ?MODULE:histogram_new(),
+    [?MODULE:histogram_update(H, I) || I <- lists:seq(0, 1000000)],
+    ?debugFmt("~p~n", [?MODULE:histogram_stats(H)]).
 
 -endif.
