@@ -37,7 +37,8 @@ struct exponentially_decaying_sample
         : size_(size),
           alpha_(alpha),
           count_(0),
-          start_time_(tick())
+          start_time_(tick()),
+          next_scale_time_(start_time_ + RESCALE_THRESHOLD)
     {
     }
         
@@ -66,15 +67,18 @@ struct exponentially_decaying_sample
 
     void update(IntType value, long timestamp)
     {
-        double priority = weight(timestamp - start_time_) / (float)(rand()/RAND_MAX);
+        double priority = weight(timestamp - start_time_) / next_random();
         if (++count_ <= size_)
             values_[priority] = value;
         else
         {
             double first = values_.begin()->first;
             if (first < priority)
-                if (values_.find(priority) == values_.end())
+            {
+                if (values_.find(priority) == values_.end() )
                     values_[priority] = value;
+                values_.erase(values_.begin());
+            }
         }
         long now = tick();
         if (now > next_scale_time_)
@@ -86,19 +90,19 @@ struct exponentially_decaying_sample
         next_scale_time_ = now + RESCALE_THRESHOLD;
         long old_start_time = start_time_;
         start_time_ = tick();
-        std::vector<double> keys;
-        for (typename std::map<double, IntType>::iterator 
-                 it=values_.begin();
+        std::map<double, IntType> new_values;
+        for (typename std::map<double, IntType>::const_iterator 
+             it=values_.begin();
              it != values_.end();
              ++it)
         {
             IntType value = it->second;
-            values_[it->first * std::exp(-alpha_ * (start_time_ - old_start_time))] = value;
-            values_.erase(it);
+            new_values[it->first * std::exp(-alpha_ * (start_time_-old_start_time))] = value;
         }
+        values_.swap(new_values);
     }
 
-    const std::vector<IntType> values() 
+    std::vector<IntType> values() const
     {
         std::vector<IntType> v;
         for (typename std::map<double, IntType>::const_iterator 
@@ -116,6 +120,11 @@ private:
     {
         return time(NULL);
     }
+
+   double next_random()
+   {
+       return dist_(gen_) / static_cast<double>(std::numeric_limits<IntType>::max());
+   }
 private:
     std::size_t size_;
     double alpha_;
@@ -123,6 +132,8 @@ private:
     long start_time_;
     long next_scale_time_;
     std::map<double, IntType> values_;
+    boost::random::uniform_int_distribution<IntType> dist_;
+    boost::random::mt19937 gen_;
     const static long RESCALE_THRESHOLD = 60;
 };
 
