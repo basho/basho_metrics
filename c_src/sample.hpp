@@ -30,7 +30,7 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 
-template <typename IntType=long>
+template <typename IntType=unsigned long>
 struct exponentially_decaying_sample
 {
     exponentially_decaying_sample(std::size_t size=1024, double alpha=0.015)

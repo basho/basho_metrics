@@ -83,6 +83,12 @@ meter_tick(_Ref) ->
 simple_test() ->
     {ok, H} = ?MODULE:histogram_new(),
     [?MODULE:histogram_update(H, I) || I <- lists:seq(0, 1000000)],
-    ?debugFmt("~p~n", [?MODULE:histogram_stats(H)]).
+    [{min,0},
+     {max,1000000},
+     {mean,500000},
+     {count,1000001},
+     {p50,514255},
+     {p95,956215},
+     {p99,991377}] = ?MODULE:histogram_stats(H).
 
 -endif.

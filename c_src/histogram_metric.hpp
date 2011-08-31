@@ -29,14 +29,14 @@
 #include "sample.hpp"
 
 
-template <typename I=unsigned int>
+template <typename IntType=unsigned long>
 class histogram
 {
 public:
     histogram() 
     : sample_(1028), 
-      min_(std::numeric_limits<I>::max()), 
-      max_(std::numeric_limits<I>::min()), 
+      min_(std::numeric_limits<IntType>::max()), 
+      max_(std::numeric_limits<IntType>::min()), 
       sum_(0), 
       count_(0),
       variance_(-1, 0) { } 
@@ -44,14 +44,14 @@ public:
     void clear() 
     {
         sample_.clear();
-        min_ = std::numeric_limits<I>::max(),
-        max_ = std::numeric_limits<I>::min(),
+        min_ = std::numeric_limits<IntType>::max(),
+        max_ = std::numeric_limits<IntType>::min(),
         sum_ = 0;
         count_ = 0;
         variance_ = std::make_pair(-1, 0);
     }
         
-    void update(I value)
+    void update(IntType value)
     {
         ++count_;
         sample_.update(value);
@@ -96,14 +96,14 @@ public:
    }
 
 
-   I count() const 
+   IntType count() const 
    { 
        return count_; 
    }
 
    struct calc_percentile
    {
-       calc_percentile(const std::vector<I>& values)
+       calc_percentile(const std::vector<IntType>& values)
            : values_(values) { }
 
        double operator()(double percentile) const
@@ -116,7 +116,7 @@ public:
            return lower+(pos-std::floor(pos))*(upper-lower);
        }
    private:
-       const std::vector<I>& values_;
+       const std::vector<IntType>& values_;
    };
          
 
@@ -125,7 +125,7 @@ public:
        std::vector<double> scores(pvec.size(), 0.0);
        if (count_)
        {
-           std::vector<I> values = sample_.values();
+           std::vector<IntType> values = sample_.values();
            std::sort(values.begin(), values.end());
            std::transform(pvec.begin(), pvec.end(), 
                           scores.begin(), calc_percentile(values));
@@ -133,11 +133,11 @@ public:
        return scores;
    }
    private:
-        uniform_sample<I> sample_;
-        I min_;
-        I max_;
-        I sum_;
-        I count_;
+        uniform_sample<IntType> sample_;
+        IntType min_;
+        IntType max_;
+        IntType sum_;
+        IntType count_;
         std::pair<double, double> variance_;
 };
 
