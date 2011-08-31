@@ -78,7 +78,7 @@ private:
     ewma one_;
     ewma five_;
     ewma fifteen_;
-    long start_time_;
+    unsigned long start_time_;
 };
 
 

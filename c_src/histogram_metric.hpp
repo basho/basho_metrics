@@ -58,6 +58,7 @@ public:
         min_ = std::min(min_, value);
         max_ = std::max(max_, value);
         sum_ += value;
+        update_variance(value);
     }
 
    double max() const 
@@ -84,17 +85,9 @@ public:
    double stddev() const 
    {
        if (count_ > 0) 
-           return std::sqrt(0);
+           return std::sqrt(variance());
        return 0.0;
    }
-
-   double variance() const
-   {
-       if (count_<= 1) 
-           return 0.0;
-       return variance_.first() / (count_- 1);
-   }
-
 
    IntType count() const 
    { 
@@ -118,27 +111,51 @@ public:
    private:
        const std::vector<IntType>& values_;
    };
-         
 
-   std::vector<double> percentiles(const std::vector<double> pvec)
-   {
-       std::vector<double> scores(pvec.size(), 0.0);
-       if (count_)
-       {
-           std::vector<IntType> values = sample_.values();
-           std::sort(values.begin(), values.end());
-           std::transform(pvec.begin(), pvec.end(), 
-                          scores.begin(), calc_percentile(values));
-       }
-       return scores;
-   }
-   private:
-        uniform_sample<IntType> sample_;
-        IntType min_;
-        IntType max_;
-        IntType sum_;
-        IntType count_;
-        std::pair<double, double> variance_;
+    std::vector<double> percentiles(const std::vector<double> pvec)
+    {
+        std::vector<double> scores(pvec.size(), 0.0);
+        if (count_)
+        {
+            std::vector<IntType> values = sample_.values();
+            std::sort(values.begin(), values.end());
+            std::transform(pvec.begin(), pvec.end(), 
+                           scores.begin(), calc_percentile(values));
+        }
+        return scores;
+    }
+private:
+    double variance() const
+    {
+        if (count_ <= 1) 
+            return 0.0;
+        return variance_.first / (count_- 1);
+    }
+
+    void update_variance(IntType value)
+    {
+        if (variance_.first == -1)
+        {
+            variance_.first = value;
+            variance_.second = 0;
+        }
+        else
+        {
+            double oldM = variance_.first;
+            double oldS = variance_.second;
+            double newM = oldM + ((value - oldM) / count_);
+            double newS = oldS + ((value - oldM) * (value - newM));
+            variance_.first = newM;
+            variance_.second = newS;
+        }
+    }
+private:
+    uniform_sample<IntType> sample_;
+    IntType min_;
+    IntType max_;
+    IntType sum_;
+    IntType count_;
+    std::pair<double, double> variance_;
 };
 
 

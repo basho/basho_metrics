@@ -60,6 +60,7 @@ static ERL_NIF_TERM ATOM_ONE;
 static ERL_NIF_TERM ATOM_FIVE;
 static ERL_NIF_TERM ATOM_FIFTEEN;
 static ERL_NIF_TERM ATOM_SIZE;
+static ERL_NIF_TERM ATOM_STDDEV;
 
 static ErlNifFunc nif_funcs[] =
 {
@@ -173,11 +174,12 @@ ERL_NIF_TERM histogram_stats(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]
         percentiles.push_back(0.950);
         percentiles.push_back(0.990);
         std::vector<double> scores(handle->p->percentiles(percentiles));
-        return enif_make_list7(env, 
+        return enif_make_list8(env, 
                                STAT_TUPLE(ATOM_MIN, handle->p->min()),
                                STAT_TUPLE(ATOM_MAX, handle->p->max()),
                                STAT_TUPLE(ATOM_MEAN, handle->p->mean()),
                                STAT_TUPLE(ATOM_COUNT, handle->p->count()),
+                               STAT_TUPLE(ATOM_STDDEV, handle->p->stddev()),
                                STAT_TUPLE(ATOM_P50, scores[0]),
                                STAT_TUPLE(ATOM_P95, scores[1]),
                                STAT_TUPLE(ATOM_P99, scores[2]));
@@ -292,6 +294,7 @@ static int on_load(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_info)
     ATOM(ATOM_FIVE, "five");
     ATOM(ATOM_FIFTEEN, "fifteen");
     ATOM(ATOM_SIZE, "size");
+    ATOM(ATOM_STDDEV, "stddev");
     return 0;
 }
 

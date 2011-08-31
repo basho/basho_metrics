@@ -28,7 +28,7 @@ class ewma
 {
     static const double NANOS = 1000000000.0;
 public:
-    explicit ewma(double alpha, long interval=5)
+    explicit ewma(double alpha, unsigned int interval=5)
         : rate_(0.0),
           uncounted_(0),
           alpha_(alpha),
@@ -62,7 +62,7 @@ public:
 
 private:
     double rate_;
-    unsigned int uncounted_;
+    unsigned long uncounted_;
     double alpha_;
     double interval_;
     bool initialized_;
