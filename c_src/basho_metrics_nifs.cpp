@@ -101,9 +101,9 @@ ERL_NIF_TERM histogram_clear(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]
 ERL_NIF_TERM histogram_update(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     histogram_handle* handle;
-    unsigned int sample;
+    unsigned long sample;
     if (enif_get_resource(env,argv[0],histogram_RESOURCE,(void**)&handle) &&
-        enif_get_uint(env, argv[1], &sample)) 
+        enif_get_ulong(env, argv[1], &sample)) 
     {
         handle->p->update(sample);
         return ATOM_OK;
@@ -167,9 +167,9 @@ ERL_NIF_TERM meter_tick(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 ERL_NIF_TERM meter_update(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     meter_handle* handle;
-    unsigned int sample;
+    unsigned long sample;
     if (enif_get_resource(env,argv[0],meter_RESOURCE,(void**)&handle) &&
-        enif_get_uint(env, argv[1], &sample)) 
+        enif_get_ulong(env, argv[1], &sample)) 
     {
         handle->p->mark(sample);
         return ATOM_OK;
