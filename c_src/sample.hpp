@@ -33,7 +33,7 @@
 template <typename IntType=unsigned long>
 struct exponentially_decaying_sample
 {
-    exponentially_decaying_sample(std::size_t size=1024, double alpha=0.015)
+    exponentially_decaying_sample(std::size_t size, double alpha=0.015)
         : size_(size),
           alpha_(alpha),
           count_(0),
@@ -158,7 +158,7 @@ public:
         }
     }
 
-    const std::vector<IntType> values() 
+    std::vector<IntType> values() const
     {
         return values_;
     }

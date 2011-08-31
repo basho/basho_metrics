@@ -33,8 +33,8 @@ template <typename IntType=unsigned long>
 class histogram
 {
 public:
-    histogram() 
-    : sample_(1028), 
+    histogram(std::size_t reservoir_size) 
+    : sample_(reservoir_size), 
       min_(std::numeric_limits<IntType>::max()), 
       max_(std::numeric_limits<IntType>::min()), 
       sum_(0), 

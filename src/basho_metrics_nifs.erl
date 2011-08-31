@@ -21,6 +21,7 @@
 %% -------------------------------------------------------------------
 -module(basho_metrics_nifs).
 -export([histogram_new/0,
+         histogram_new/1,
          histogram_update/2,
          histogram_stats/1,
          histogram_clear/1,
@@ -32,6 +33,10 @@
 -on_load(init/0).
 
 -define(nif_stub, nif_stub_error(?LINE)).
+
+-opaque histogram() :: binary().
+
+-type histogram_options() :: [{size, pos_integer()}].
 
 nif_stub_error(Line) ->
     erlang:nif_error({nif_not_loaded,module,?MODULE,line,Line}).
@@ -51,7 +56,13 @@ init() ->
               end,
     erlang:load_nif(filename:join(PrivDir, ?MODULE), 0).
 
+
+-spec histogram_new() -> histogram().
 histogram_new() ->
+    histogram_new([]).
+
+-spec histogram_new(Options::histogram_options()) -> histogram().
+histogram_new(_Options) ->
     ?nif_stub.
 
 histogram_update(_Ref, _Samples) ->
@@ -92,3 +103,4 @@ simple_test() ->
      {p99,991377}] = ?MODULE:histogram_stats(H).
 
 -endif.
+

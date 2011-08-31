@@ -29,6 +29,8 @@
 static ErlNifResourceType* histogram_RESOURCE;
 static ErlNifResourceType* meter_RESOURCE;
 
+static const unsigned long DEFAULT_RESERVOIR_SIZE = 1028;
+
 struct meter_handle
 {
     meter<> *p;
@@ -36,6 +38,7 @@ struct meter_handle
 
 struct histogram_handle
 {
+    std::size_t size;
     histogram<> *p;
 };
 
@@ -56,10 +59,11 @@ static ERL_NIF_TERM ATOM_P999;
 static ERL_NIF_TERM ATOM_ONE;
 static ERL_NIF_TERM ATOM_FIVE;
 static ERL_NIF_TERM ATOM_FIFTEEN;
+static ERL_NIF_TERM ATOM_SIZE;
 
 static ErlNifFunc nif_funcs[] =
 {
-    {"histogram_new", 0, histogram_new},
+    {"histogram_new", 1, histogram_new},
     {"histogram_update", 2, histogram_update},
     {"histogram_stats", 1, histogram_stats},
     {"histogram_clear", 1, histogram_clear},
@@ -72,16 +76,61 @@ static ErlNifFunc nif_funcs[] =
 #define ATOM(Id, Value) { Id = enif_make_atom(env, Value); }
 #define STAT_TUPLE(Key, Value) enif_make_tuple2(env, Key, enif_make_ulong(env, static_cast<unsigned long>(Value)))
 
+template <typename Acc> ERL_NIF_TERM fold(ErlNifEnv* env, ERL_NIF_TERM list,
+                                          ERL_NIF_TERM(*fun)(ErlNifEnv*, ERL_NIF_TERM, Acc&),
+                                          Acc& acc)
+{
+    ERL_NIF_TERM head, tail = list;
+    while (enif_get_list_cell(env, tail, &head, &tail))
+    {
+        ERL_NIF_TERM result = fun(env, head, acc);
+        if (result != ATOM_OK)
+        {
+            return result;
+        }
+    }
+    return ATOM_OK;
+}
+
+ERL_NIF_TERM parse_histogram_option(ErlNifEnv* env, ERL_NIF_TERM item, 
+                                    histogram_handle& handle)
+{
+    int arity;
+    const ERL_NIF_TERM* option;
+    if (enif_get_tuple(env, item, &arity, &option))
+    {
+        if (option[0] == ATOM_SIZE)
+        {
+            unsigned long sample_size;
+            if (enif_get_ulong(env, option[1], &sample_size))
+            {
+                handle.size = sample_size;
+            }
+        }
+    }
+    return ATOM_OK;
+}
+
+
 ERL_NIF_TERM histogram_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     histogram_handle *handle = 
         (histogram_handle *)enif_alloc_resource(histogram_RESOURCE,
                                                 sizeof(histogram_handle));
-    memset(handle, '\0', sizeof(histogram_handle));
-    handle->p = new histogram<>;
-    ERL_NIF_TERM result = enif_make_resource(env, handle);
-    enif_release_resource(handle);
-    return enif_make_tuple2(env, ATOM_OK, result);
+    if (enif_is_list(env, argv[0]))
+    {
+        memset(handle, '\0', sizeof(histogram_handle));
+        handle->size = DEFAULT_RESERVOIR_SIZE;
+        fold(env, argv[0], parse_histogram_option, *handle);
+        handle->p = new histogram<>(handle->size);
+        ERL_NIF_TERM result = enif_make_resource(env, handle);
+        enif_release_resource(handle);
+        return enif_make_tuple2(env, ATOM_OK, result);
+    }
+    else 
+    {
+        return enif_make_badarg(env);
+    }
 }
 
 ERL_NIF_TERM histogram_clear(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -242,6 +291,7 @@ static int on_load(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_info)
     ATOM(ATOM_ONE, "one");
     ATOM(ATOM_FIVE, "five");
     ATOM(ATOM_FIFTEEN, "fifteen");
+    ATOM(ATOM_SIZE, "size");
     return 0;
 }
 
