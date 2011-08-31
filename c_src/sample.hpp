@@ -133,7 +133,7 @@ private:
     long next_scale_time_;
     std::map<double, IntType> values_;
     boost::random::uniform_int_distribution<IntType> dist_;
-    boost::random::mt19937 gen_;
+    boost::random::mt19937_64 gen_;
     const static long RESCALE_THRESHOLD = 60;
 };
 
@@ -185,7 +185,7 @@ private:
     std::size_t count_;
     std::vector<IntType> values_;
     boost::random::uniform_int_distribution<IntType> dist_;
-    boost::random::mt19937 gen_;
+    boost::random::mt19937_64 gen_;
 };
 
 #endif // include guard

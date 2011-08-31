@@ -77,9 +77,10 @@ static ErlNifFunc nif_funcs[] =
 #define ATOM(Id, Value) { Id = enif_make_atom(env, Value); }
 #define STAT_TUPLE(Key, Value) enif_make_tuple2(env, Key, enif_make_ulong(env, static_cast<unsigned long>(Value)))
 
-template <typename Acc> ERL_NIF_TERM fold(ErlNifEnv* env, ERL_NIF_TERM list,
-                                          ERL_NIF_TERM(*fun)(ErlNifEnv*, ERL_NIF_TERM, Acc&),
-                                          Acc& acc)
+template <typename Acc> 
+ERL_NIF_TERM fold(ErlNifEnv* env, ERL_NIF_TERM list,
+                  ERL_NIF_TERM(*fun)(ErlNifEnv*, ERL_NIF_TERM, Acc&),
+                  Acc& acc)
 {
     ERL_NIF_TERM head, tail = list;
     while (enif_get_list_cell(env, tail, &head, &tail))

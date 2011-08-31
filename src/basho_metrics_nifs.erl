@@ -36,7 +36,24 @@
 
 -opaque histogram() :: binary().
 
+-opaque meter() :: binary().
+
 -type histogram_options() :: [{size, pos_integer()}].
+
+-type meter_options() :: [{tick_interval, pos_integer()}].
+
+-type histogram_stats() :: [{mean, integer()} |
+                            {count, integer()} |
+                            {stddev, integer()} |
+                            {p50, integer()} |
+                            {p95, integer()} |
+                            {p95, integer()} |
+                            {p99, integer()}].
+
+-type meter_stats() :: [{one, integer()}  |
+                        {five, integer()} |
+                        {fifteen, integer()} |
+                        {count, non_neg_integer()}].
 
 nif_stub_error(Line) ->
     erlang:nif_error({nif_not_loaded,module,?MODULE,line,Line}).
@@ -57,32 +74,43 @@ init() ->
     erlang:load_nif(filename:join(PrivDir, ?MODULE), 0).
 
 
--spec histogram_new() -> histogram().
+-spec histogram_new() -> {ok, histogram()}.
 histogram_new() ->
     histogram_new([]).
 
--spec histogram_new(Options::histogram_options()) -> histogram().
+-spec histogram_new(Options::histogram_options()) -> {ok, histogram()}.
 histogram_new(_Options) ->
     ?nif_stub.
 
-histogram_update(_Ref, _Samples) ->
+-spec histogram_update(histogram(), Sample::pos_integer()) -> ok.
+histogram_update(_Ref, _Sample) ->
     ?nif_stub.
 
+-spec histogram_stats(histogram()) -> histogram_stats().
 histogram_stats(_Ref) ->
     ?nif_stub.
 
+-spec histogram_clear(histogram()) -> ok.
 histogram_clear(_Ref) ->
     ?nif_stub.
 
+-spec meter_new() -> {ok, meter()}.
 meter_new() ->
+    meter_new([]).
+
+-spec meter_new(Options::meter_options()) -> {ok, meter()}.
+meter_new(_Options) ->
     ?nif_stub.
 
-meter_update(_Ref, _Samples) ->
+-spec meter_update(histogram(), Sample::pos_integer()) -> ok.
+meter_update(_Ref, _Sample) ->
     ?nif_stub.
 
+-spec meter_stats(meter()) -> meter_stats().
 meter_stats(_Ref) ->
     ?nif_stub.
 
+-spec meter_tick(meter()) -> ok.
 meter_tick(_Ref) ->
     ?nif_stub.
 
@@ -99,9 +127,9 @@ simple_test() ->
      {mean,500000},
      {count,1000001},
      {stddev,0},
-     {p50,514255},
-     {p95,956215},
-     {p99,991377}] = ?MODULE:histogram_stats(H).
+     {p50,490606},
+     {p95,954205},
+     {p99,990504}] = ?MODULE:histogram_stats(H).
 
 -endif.
 
