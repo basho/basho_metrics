@@ -127,9 +127,9 @@ simple_test() ->
      {mean,500000},
      {count,1000001},
      {stddev,0},
-     {p50,490606},
-     {p95,954205},
-     {p99,990504}] = ?MODULE:histogram_stats(H).
+     {p50,514255},
+     {p95,956215},
+     {p99,991377}] = ?MODULE:histogram_stats(H).
 
 -endif.
 
