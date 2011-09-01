@@ -1,6 +1,10 @@
 // -------------------------------------------------------------------
 //
-// basho_metrics: fast performance metrics for Erlang. 
+// basho_metrics:  fast performance metrics for Erlang.
+// 
+// inspired and partially derived from Coda Hale's 'metrics' 
+// Copyright (c) 2010-2001 Coda Hale
+// https://github.com/codahale/metrics/blob/development/LICENSE.md
 //
 // Copyright (c) 2011 Basho Technologies, Inc. All Rights Reserved.
 //
@@ -29,6 +33,12 @@
 #include "sample.hpp"
 
 
+/**
+ * A metric which calculates the distribution of a value.
+ *
+ * @see <a href="http://www.johndcook.com/standard_deviation.html">Accurately
+ * computing running variance</a>
+ */
 template <typename IntType=unsigned long>
 class histogram
 {
@@ -41,16 +51,22 @@ public:
       count_(0),
       variance_(-1, 0) { } 
 public:
+    /**
+     * Clears all recorded values.
+     */
     void clear() 
     {
         sample_.clear();
-        min_ = std::numeric_limits<IntType>::max(),
-        max_ = std::numeric_limits<IntType>::min(),
+        min_ = std::numeric_limits<IntType>::max();
+        max_ = std::numeric_limits<IntType>::min();
         sum_ = 0;
         count_ = 0;
         variance_ = std::make_pair(-1, 0);
     }
-        
+
+    /**
+     * Adds a recorded value.
+     */        
     void update(IntType value)
     {
         ++count_;
@@ -60,58 +76,76 @@ public:
         sum_ += value;
         update_variance(value);
     }
+    
+    /**
+     * Returns the largest recorded value.
+     */
+    double max() const 
+    {
+        if (count_ > 0) 
+            return max_;
+        return 0.0;
+    }
 
-   double max() const 
-   {
-       if (count_ > 0) 
-           return max_;
-       return 0.0;
-   }
+    /**
+     * Returns the smallest recorded value.
+     */    
+    double min() const
+    {
+        if (count_ > 0) 
+            return min_;
+        return 0.0;
+    }
 
-   double min() const
-   {
-       if (count_ > 0) 
-           return min_;
-       return 0.0;
-   }
+    /**
+     * Returns the arithmetic mean of all recorded values.
+     */
+    double mean() const
+    {
+        if (count_ > 0) 
+            return sum_ / (double) count_;
+        return 0.0;
+    }
 
-   double mean() const
-   {
-       if (count_ > 0) 
-           return sum_ / (double) count_;
-       return 0.0;
-   }
+    /**
+     * Returns the standard deviation of all recorded values.
+     */    
+    double stddev() const 
+    {
+        if (count_ > 0) 
+            return std::sqrt(variance());
+        return 0.0;
+    }
+    
+    /**
+     * Returns the number of values recorded.
+     */
+    IntType count() const 
+    { 
+        return count_; 
+    }
+    
+    struct calc_percentile
+    {
+        calc_percentile(const std::vector<IntType>& values)
+            : values_(values) { }
+        
+        double operator()(double percentile) const
+        {
+            double pos(percentile * (values_.size() + 1));
+            if (pos < 1) return values_[0];
+            if (pos >= values_.size()) return values_[values_.size()-1];
+            double lower = values_[((int)pos)-1];
+            double upper = values_[(int)pos];
+            return lower+(pos-std::floor(pos))*(upper-lower);
+        }
+    private:
+        const std::vector<IntType>& values_;
+    };
 
-   double stddev() const 
-   {
-       if (count_ > 0) 
-           return std::sqrt(variance());
-       return 0.0;
-   }
-
-   IntType count() const 
-   { 
-       return count_; 
-   }
-
-   struct calc_percentile
-   {
-       calc_percentile(const std::vector<IntType>& values)
-           : values_(values) { }
-
-       double operator()(double percentile) const
-       {
-           double pos(percentile * (values_.size() + 1));
-           if (pos < 1) return values_[0];
-           if (pos >= values_.size()) return values_[values_.size()-1];
-           double lower = values_[((int)pos)-1];
-           double upper = values_[(int)pos];
-           return lower+(pos-std::floor(pos))*(upper-lower);
-       }
-   private:
-       const std::vector<IntType>& values_;
-   };
-
+    /**
+     * Returns an array of values at percentiles passed in pvec
+     */    
     std::vector<double> percentiles(const std::vector<double> pvec)
     {
         std::vector<double> scores(pvec.size(), 0.0);
@@ -129,7 +163,7 @@ private:
     {
         if (count_ <= 1) 
             return 0.0;
-        return variance_.first / (count_- 1);
+        return variance_.second / (count_- 1);
     }
 
     void update_variance(IntType value)

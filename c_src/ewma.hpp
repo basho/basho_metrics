@@ -1,6 +1,10 @@
 // -------------------------------------------------------------------
 //
 // basho_metrics:  fast performance metrics for Erlang.
+// 
+// inspired and partially derived from Coda Hale's 'metrics' 
+// Copyright (c) 2010-2001 Coda Hale
+// https://github.com/codahale/metrics/blob/development/LICENSE.md
 //
 // Copyright (c) 2011 Basho Technologies, Inc. All Rights Reserved.
 //
@@ -24,6 +28,13 @@
 
 #include <cmath>
 
+/**
+ * An exponentially-weighted moving average.
+ *
+ * UNIX Load Average Part 1: How It Works: http://www.teamquest.com/pdfs/whitepaper/ldavg1.pdf
+ * 
+ * UNIX Load Average Part 2: Not Your Average Average: http://www.teamquest.com/pdfs/whitepaper/ldavg2.pdf
+ */
 class ewma
 {
     static const double NANOS = 1000000000.0;
@@ -35,11 +46,17 @@ public:
           interval_(interval*NANOS),
           initialized_(false) { } 
 
+    /**
+     * Update the moving average with a new value.
+     */
     void update(long n) 
     {
         uncounted_ += n;
     }
 
+    /**
+     * Mark the passage of time and decay the current rate accordingly.
+     */
     void tick()
     {
         std::size_t count = uncounted_;
@@ -53,7 +70,6 @@ public:
             initialized_ = true;
         }
     }
-
 
     double rate() const
     {
