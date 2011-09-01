@@ -163,7 +163,7 @@ private:
     {
         if (count_ <= 1) 
             return 0.0;
-        return variance_.first / (count_- 1);
+        return variance_.second / (count_- 1);
     }
 
     void update_variance(IntType value)

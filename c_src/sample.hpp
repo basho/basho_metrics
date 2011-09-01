@@ -208,7 +208,7 @@ public:
         std::fill_n(values_.begin(), size_, 0);
     }
 
-    std::size_t size()
+    std::size_t size() const
     {
         return std::min(count_, size_);
     }
@@ -226,7 +226,7 @@ public:
 
     std::vector<IntType> values() const
     {
-        return values_;
+        return std::vector<IntType>(values_.begin(), values_.begin()+size());
     }
 
 private:
