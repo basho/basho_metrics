@@ -1,6 +1,10 @@
 // -------------------------------------------------------------------
 //
 // basho_metrics: fast performance metrics for Erlang.
+// 
+// inspired and partially derived from Coda Hale's 'metrics' 
+// Copyright (c) 2010-2001 Coda Hale
+// https://github.com/codahale/metrics/blob/development/LICENSE.md
 //
 // Copyright (c) 2011 Basho Technologies, Inc. All Rights Reserved.
 //
@@ -30,6 +34,18 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 
+
+/**
+ * An exponentially-decaying random sample of {@code long}s. Uses Cormode et
+ * al's forward-decaying priority reservoir sampling method to produce a
+ * statistically representative sample, exponentially biased towards newer
+ * entries.
+ *
+ * @see <a href="http://www.research.att.com/people/Cormode_Graham/library/publications/CormodeShkapenyukSrivastavaXu09.pdf">
+ * Cormode et al. Forward Decay: A Practical Time Decay Model for Streaming
+ * Systems. ICDE '09: Proceedings of the 2009 IEEE International Conference on
+ * Data Engineering (2009)</a>
+ */
 template <typename IntType=unsigned long>
 struct exponentially_decaying_sample
 {
@@ -42,6 +58,9 @@ struct exponentially_decaying_sample
     {
     }
         
+    /**
+     * Clears all recorded values.
+     */
     void clear()
     {
         values_.clear();
@@ -50,6 +69,9 @@ struct exponentially_decaying_sample
         next_scale_time_ = start_time_ + RESCALE_THRESHOLD;
     }
 
+   /**
+     * Returns the number of values recorded.
+     */
     std::size_t size() const
     {
         return std::min(size_, count_);
@@ -60,6 +82,9 @@ struct exponentially_decaying_sample
         return std::exp(alpha_ * t);
     }
 
+    /**
+     * Adds a new recorded value to the sample.
+     */    
     void update(IntType value) 
     {
         update(value, tick());
@@ -85,6 +110,26 @@ struct exponentially_decaying_sample
             rescale(now, next_scale_time_);
     }
 
+    /* "A common feature of the above techniques—indeed, the key technique 
+     * that allows us to track the decayed weights efficiently—is that they 
+     * maintain counts and other quantities based on g(ti − L), and only scale 
+     * by g(t − L) at query time. But while g(ti −L)/g(t−L) is guaranteed to 
+     * lie between zero and one, the intermediate values of g(ti − L) could 
+     * become very large. For polynomial functions, these values should not 
+     * grow too large, and should be effectively represented in practice by 
+     * floating point values without loss of precision. For exponential 
+     * functions, these values could grow quite large as new values of (ti − L)
+     * become large, and potentially exceed the capacity of common floating 
+     * point types. However, since the values stored by the algorithms are 
+     * linear combinations of g values (scaled sums), they can be rescaled 
+     * relative to a new landmark. That is, by the analysis of exponential 
+     * decay in Section III-A, the choice of L does not affect the final 
+     * result. We can therefore multiply each value based on L by a factor of 
+     * exp(−α(L′ − L)), and obtain the correct value as if we had instead 
+     * computed relative to a new landmark L′ (and then use this new L′ at 
+     * query time). This can be done with a linear pass over whatever data 
+     * structure is being used."
+     */
     void rescale(long now, long next) 
     {
         next_scale_time_ = now + RESCALE_THRESHOLD;
@@ -102,6 +147,9 @@ struct exponentially_decaying_sample
         values_.swap(new_values);
     }
 
+    /**
+     * Returns a copy of the sample's values.
+     */
     std::vector<IntType> values() const
     {
         std::vector<IntType> v;
@@ -138,6 +186,13 @@ private:
 };
 
 
+/**
+ * A random sample of a stream of {@code long}s. Uses Vitter's Algorithm R to
+ * produce a statistically representative sample.
+ *
+ * @see <a href="http://www.cs.umd.edu/~samir/498/vitter.pdf">Random Sampling
+ *      with a Reservoir</a>
+ */
 template <typename IntType=unsigned long>
 struct uniform_sample 
 {
@@ -153,7 +208,7 @@ public:
         std::fill_n(values_.begin(), size_, 0);
     }
 
-    std::size_t size()
+    std::size_t size() const
     {
         return std::min(count_, size_);
     }
@@ -171,7 +226,7 @@ public:
 
     std::vector<IntType> values() const
     {
-        return values_;
+        return std::vector<IntType>(values_.begin(), values_.begin()+size());
     }
 
 private:

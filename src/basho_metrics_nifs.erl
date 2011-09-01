@@ -2,6 +2,10 @@
 %%
 %% basho_metrics: fast performance metrics for Erlang.
 %%
+%% inspired and partially derived from Coda Hale's 'metrics' 
+%% Copyright (c) 2010-2001 Coda Hale
+%% https://github.com/codahale/metrics/blob/development/LICENSE.md
+%%
 %% Copyright (c) 2007-2011 Basho Technologies, Inc.  All Rights Reserved.
 %%
 %% This file is provided to you under the Apache License,
@@ -119,17 +123,21 @@ meter_tick(_Ref) ->
 %% ===================================================================
 -ifdef(TEST).
 
-simple_test() ->
-    {ok, H} = ?MODULE:histogram_new(),
-    [?MODULE:histogram_update(H, I) || I <- lists:seq(0, 1000000)],
-    [{min,0},
-     {max,1000000},
-     {mean,500000},
-     {count,1000001},
-     {stddev,0},
-     {p50,514255},
-     {p95,956215},
-     {p99,991377}] = ?MODULE:histogram_stats(H).
+close_to(X, N, Delta) ->
+    abs(X-N) < Delta.
+
+histogram_test() ->
+    {ok, H} = ?MODULE:histogram_new([{size, 1000}]),
+    [?MODULE:histogram_update(H, I) || I <- lists:seq(1, 10000)],
+    Stats = ?MODULE:histogram_stats(H),
+    ?assertEqual(proplists:get_value(min, Stats), 1),
+    ?assertEqual(proplists:get_value(max, Stats), 10000),
+    ?assertEqual(proplists:get_value(count, Stats),  10000),
+    ?assert(close_to(proplists:get_value(stddev, Stats), 2886, 10)),
+    ?assert(close_to(proplists:get_value(mean, Stats), 5000, 100)),
+    ?assert(close_to(proplists:get_value(p50, Stats), 5000, 100)),
+    ?assert(close_to(proplists:get_value(p95, Stats), 9500, 100)),
+    ?assert(close_to(proplists:get_value(p99, Stats), 9900, 100)).
 
 -endif.
 

@@ -1,0 +1,35 @@
+* basho_metrics
+** Overview
+basho_metrics is an open source Erlang library for efficient calculation of service performance metrics.
+
+basho_metrics is inspired by and provides a subset of the functionality of Coda Hale's 
+[[https://github.com/codahale/metrics/][Metrics]] package.
+
+** Quick Start
+   You must have [[http://erlang.org/download.html][Erlang/OTP R13B04]] or later and a GNU-style build
+   system to compile and run =basho_metrics=. 
+** Contributing
+   We encourage contributions to =basho_metrics= from the community.
+
+   1) Fork the =basho_metrics= repository on [[https://github.com/basho/basho_metrics][Github]].
+   2) Clone your fork or add the remote if you already have a clone of
+      the repository.
+#+BEGIN_SRC shell
+git clone git@github.com:yourusername/basho_metrics.git
+# or
+git remote add mine git@github.com:yourusername/basho_metrics.git
+#+END_SRC
+   3) Create a topic branch for your change.
+#+BEGIN_SRC shell
+git checkout -b some-topic-branch
+#+END_SRC
+   4) Make your change and commit. Use a clear and descriptive commit
+      message, spanning multiple lines if detailed explanation is
+      needed.
+   5) Push to your fork of the repository and then send a pull-request
+      through Github.
+#+BEGIN_SRC shell
+git push mine some-topic-branch
+#+END_SRC
+   6) A Basho engineer or community maintainer will review your patch
+      and merge it into the main repository or send you feedback.

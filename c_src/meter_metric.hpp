@@ -1,6 +1,10 @@
 // -------------------------------------------------------------------
 //
 // basho_metrics:  fast performance metrics for erlang
+// 
+// inspired and partially derived from Coda Hale's 'metrics' 
+// Copyright (c) 2010-2001 Coda Hale
+// https://github.com/codahale/metrics/blob/development/LICENSE.md
 //
 // Copyright (c) 2011 Basho Technologies, Inc. All Rights Reserved.
 //
@@ -24,6 +28,12 @@
 
 #include "ewma.hpp"
 
+/**
+ * A meter metric which measures mean throughput and one-, five-, and
+ * fifteen-minute exponentially-weighted moving average throughputs.
+ *
+ * http://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average
+ */
 template <typename IntType=unsigned long>
 class meter
 {
@@ -34,6 +44,10 @@ public:
           five_(alpha_five()),
           fifteen_(alpha_fifteen()) { } 
 
+
+    /**
+     * Updates the moving averages.
+     */
     void tick()
     {
         one_.tick();
@@ -41,11 +55,17 @@ public:
         fifteen_.tick();
     }
 
+    /**
+     * Mark the occurrence of an event.
+     */
     void mark()
     {
         mark(1);
     }
 
+    /**
+     * Mark the occurrence of a given number of events.
+     */
     void mark(IntType n)
     {
         count_ += n;
@@ -54,21 +74,45 @@ public:
         fifteen_.update(n);
     }
 
+    /**
+     * Returns the number of events which have been marked.
+     */
     unsigned long count() const 
     {
         return count_;
     }
-    
+
+    /**
+     * Returns the one-minute exponentially-weighted moving average rate at
+     * which events have occurred since the meter was created.
+     *
+     * This rate has the same exponential decay factor as the one-minute load
+     * average in the 'top' Unix command.
+     */    
     double one() const 
     {
         return one_.rate();
     }
 
+    /**
+     * Returns the five-minute exponentially-weighted moving average rate at
+     * which events have occurred since the meter was created.
+
+     * This rate has the same exponential decay factor as the five-minute load
+     * average in the 'top' Unix command.
+     */
     double five() const
     {
         return five_.rate();
     }
 
+    /**
+     * Returns the fifteen-minute exponentially-weighted moving average rate at
+     * which events have occurred since the meter was created.
+     * <p>
+     * This rate has the same exponential decay factor as the fifteen-minute 
+     * load average in the 'top' Unix command.
+     */    
     double fifteen() const
     {
         return fifteen_.rate();
