@@ -1,6 +1,10 @@
 // -------------------------------------------------------------------
 //
 // basho_metrics:  fast performance metrics for erlang
+// 
+// inspired and partially derived from Coda Hale's 'metrics' 
+// Copyright (c) 2010-2001 Coda Hale
+// https://github.com/codahale/metrics/blob/development/LICENSE.md
 //
 // Copyright (c) 2011 Basho Technologies, Inc. All Rights Reserved.
 //
