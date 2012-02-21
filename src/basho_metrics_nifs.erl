@@ -30,6 +30,7 @@
          histogram_stats/1,
          histogram_clear/1,
          meter_new/0,
+         meter_new/1,
          meter_update/2,
          meter_tick/1,
          meter_stats/1]).

@@ -34,9 +34,11 @@ static ErlNifResourceType* histogram_RESOURCE;
 static ErlNifResourceType* meter_RESOURCE;
 
 static const unsigned long DEFAULT_RESERVOIR_SIZE = 1028;
+static const unsigned long DEFAULT_METER_TICK_INTERVAL = 1000;
 
 struct meter_handle
 {
+    unsigned long tick_interval;
     meter<> *p;
 };
 
@@ -65,6 +67,7 @@ static ERL_NIF_TERM ATOM_FIVE;
 static ERL_NIF_TERM ATOM_FIFTEEN;
 static ERL_NIF_TERM ATOM_SIZE;
 static ERL_NIF_TERM ATOM_STDDEV;
+static ERL_NIF_TERM ATOM_TICK_INTERVAL;
 
 static ErlNifFunc nif_funcs[] =
 {
@@ -72,7 +75,7 @@ static ErlNifFunc nif_funcs[] =
     {"histogram_update", 2, histogram_update},
     {"histogram_stats", 1, histogram_stats},
     {"histogram_clear", 1, histogram_clear},
-    {"meter_new", 0, meter_new},
+    {"meter_new", 1, meter_new},
     {"meter_update", 2, meter_update},
     {"meter_tick", 1, meter_tick},
     {"meter_stats", 1, meter_stats},
@@ -111,6 +114,25 @@ ERL_NIF_TERM parse_histogram_option(ErlNifEnv* env, ERL_NIF_TERM item,
             if (enif_get_ulong(env, option[1], &sample_size))
             {
                 handle.size = sample_size;
+            }
+        }
+    }
+    return ATOM_OK;
+}
+
+ERL_NIF_TERM parse_meter_option(ErlNifEnv* env, ERL_NIF_TERM item, 
+                                    meter_handle& handle)
+{
+    int arity;
+    const ERL_NIF_TERM* option;
+    if (enif_get_tuple(env, item, &arity, &option))
+    {
+        if (option[0] == ATOM_TICK_INTERVAL)
+        {
+            unsigned long tick_interval;
+            if (enif_get_ulong(env, option[1], &tick_interval))
+            {
+                handle.tick_interval = tick_interval;
             }
         }
     }
@@ -199,11 +221,20 @@ ERL_NIF_TERM meter_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     meter_handle *handle = 
         (meter_handle *)enif_alloc_resource(meter_RESOURCE,
                                             sizeof(meter_handle));
-    memset(handle, '\0', sizeof(meter_handle));
-    handle->p = new meter<>;
-    ERL_NIF_TERM result = enif_make_resource(env, handle);
-    enif_release_resource(handle);
-    return enif_make_tuple2(env, ATOM_OK, result);
+    if (enif_is_list(env, argv[0]))
+    {
+        memset(handle, '\0', sizeof(meter_handle));
+        handle->tick_interval = DEFAULT_METER_TICK_INTERVAL;
+        fold(env, argv[0], parse_meter_option, *handle);
+        handle->p = new meter<>(handle->tick_interval);
+        ERL_NIF_TERM result = enif_make_resource(env, handle);
+        enif_release_resource(handle);
+        return enif_make_tuple2(env, ATOM_OK, result);
+    }
+    else
+    {
+        return enif_make_badarg(env);
+    }
 }
 
 ERL_NIF_TERM meter_tick(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -300,6 +331,7 @@ static int on_load(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_info)
     ATOM(ATOM_FIFTEEN, "fifteen");
     ATOM(ATOM_SIZE, "size");
     ATOM(ATOM_STDDEV, "stddev");
+    ATOM(ATOM_TICK_INTERVAL, "tick_interval");
     return 0;
 }
 
