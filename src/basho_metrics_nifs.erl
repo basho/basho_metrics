@@ -68,14 +68,14 @@ nif_stub_error(Line) ->
 -endif.
 
 init() ->
-    PrivDir = case code:priv_dir(application:get_application(?MODULE)) of
-                  {error, bad_name} ->
-                      EbinDir = filename:dirname(code:which(?MODULE)),
-                      AppPath = filename:dirname(EbinDir),
-                      filename:join(AppPath, "priv");
-                  Path ->
-                      Path
-              end,
+    PrivDir = case application:get_application(?MODULE) of
+        {ok, AppName} ->
+            code:priv_dir(AppName);
+        _Error ->
+            EbinDir = filename:dirname(code:which(?MODULE)),
+            AppPath = filename:dirname(EbinDir),
+            filename:join(AppPath, "priv")
+    end,
     erlang:load_nif(filename:join(PrivDir, ?MODULE), 0).
 
 
