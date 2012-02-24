@@ -68,7 +68,7 @@ nif_stub_error(Line) ->
 -endif.
 
 init() ->
-    PrivDir = case code:priv_dir(?MODULE) of
+    PrivDir = case code:priv_dir(application:get_application(?MODULE)) of
                   {error, bad_name} ->
                       EbinDir = filename:dirname(code:which(?MODULE)),
                       AppPath = filename:dirname(EbinDir),
