@@ -68,16 +68,20 @@ nif_stub_error(Line) ->
 -endif.
 
 init() ->
-    PrivDir = case code:priv_dir(?MODULE) of
-                  {error, bad_name} ->
-                      EbinDir = filename:dirname(code:which(?MODULE)),
-                      AppPath = filename:dirname(EbinDir),
-                      filename:join(AppPath, "priv");
-                  Path ->
-                      Path
-              end,
+    PrivDir = try
+        {ok, AppName} = application:get_application(?MODULE),
+        case code:priv_dir(AppName) of
+            {error, Reason} ->
+                throw(Reason);
+            Result ->
+                Result
+        end
+    catch _:_ ->
+        EbinDir = filename:dirname(code:which(?MODULE)),
+        AppPath = filename:dirname(EbinDir),
+        filename:join(AppPath, "priv")
+    end,
     erlang:load_nif(filename:join(PrivDir, ?MODULE), 0).
-
 
 -spec histogram_new() -> {ok, histogram()}.
 histogram_new() ->
