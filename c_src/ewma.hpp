@@ -37,13 +37,13 @@
  */
 class ewma
 {
-    static const double NANOS = 1000000.0;
+    static const double MICRO = 1000000.0;
 public:
     explicit ewma(double alpha, unsigned int interval)
         : rate_(0.0),
           uncounted_(0),
           alpha_(alpha),
-          interval_(interval * NANOS / 1000), // ms
+          interval_(interval * MICRO / 1000), // ms
           initialized_(false) { } 
 
     /**
@@ -73,7 +73,7 @@ public:
 
     double rate() const
     {
-        return rate_ * (double)NANOS;
+        return rate_ * (double)MICRO;
     }
 
 private:
