@@ -81,7 +81,7 @@ init() ->
         AppPath = filename:dirname(EbinDir),
         filename:join(AppPath, "priv")
     end,
-    erlang:load_nif(filename:join(PrivDir, ?MODULE), 0).
+    erlang:load_nif(filename:join(PrivDir, ?MODULE_STRING), 0).
 
 -spec histogram_new() -> {ok, histogram()}.
 histogram_new() ->
