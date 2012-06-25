@@ -60,6 +60,13 @@
                         {fifteen, integer()} |
                         {count, non_neg_integer()}].
 
+-export_type([histogram/0,
+              meter/0,
+              histogram_stats/0,
+              meter_stats/0,
+              histogram_options/0,
+              meter_options/0]).
+
 nif_stub_error(Line) ->
     erlang:nif_error({nif_not_loaded,module,?MODULE,line,Line}).
 
