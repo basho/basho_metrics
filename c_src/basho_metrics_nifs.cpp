@@ -37,6 +37,7 @@ static ErlNifResourceType* histogram_RESOURCE;
 static ErlNifResourceType* meter_RESOURCE;
 
 static const unsigned long DEFAULT_RESERVOIR_SIZE = 1028;
+static const unsigned long DEFAULT_WINDOW_WIDTH = 60000;
 static const unsigned long DEFAULT_METER_TICK_INTERVAL = 1000;
 
 struct meter_handle
@@ -50,6 +51,7 @@ struct histogram_handle
 {
     pthread_mutex_t m;
     std::size_t size;
+    std::size_t width;
     histogram<> *p;
 };
 
@@ -71,6 +73,7 @@ static ERL_NIF_TERM ATOM_ONE;
 static ERL_NIF_TERM ATOM_FIVE;
 static ERL_NIF_TERM ATOM_FIFTEEN;
 static ERL_NIF_TERM ATOM_SIZE;
+static ERL_NIF_TERM ATOM_WINDOW_WIDTH;
 static ERL_NIF_TERM ATOM_STDDEV;
 static ERL_NIF_TERM ATOM_TICK_INTERVAL;
 
@@ -121,6 +124,14 @@ ERL_NIF_TERM parse_histogram_option(ErlNifEnv* env, ERL_NIF_TERM item,
                 handle.size = sample_size;
             }
         }
+        if (option[0] == ATOM_WINDOW_WIDTH)
+        {
+            unsigned long window_width;
+            if (enif_get_ulong(env, option[1], &window_width))
+            {
+                handle.width = window_width;
+            }
+        }
     }
     return ATOM_OK;
 }
@@ -155,8 +166,9 @@ ERL_NIF_TERM histogram_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         memset(handle, '\0', sizeof(histogram_handle));
         pthread_mutex_init(&(handle->m), NULL);
         handle->size = DEFAULT_RESERVOIR_SIZE;
+        handle->width = DEFAULT_WINDOW_WIDTH;
         fold(env, argv[0], parse_histogram_option, *handle);
-        handle->p = new histogram<>(handle->size);
+        handle->p = new histogram<>(handle->size, handle->width);
         ERL_NIF_TERM result = enif_make_resource(env, handle);
         enif_release_resource(handle);
         return enif_make_tuple2(env, ATOM_OK, result);
@@ -362,6 +374,7 @@ static int on_load(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_info)
     ATOM(ATOM_FIVE, "five");
     ATOM(ATOM_FIFTEEN, "fifteen");
     ATOM(ATOM_SIZE, "size");
+    ATOM(ATOM_WINDOW_WIDTH, "window_width");
     ATOM(ATOM_STDDEV, "stddev");
     ATOM(ATOM_TICK_INTERVAL, "tick_interval");
     return 0;
