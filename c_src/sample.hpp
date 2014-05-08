@@ -31,7 +31,7 @@
 #include <cmath>
 #include <ctime>
 #include <cstdlib>
-#include <cstdint>
+#include <stdint.h>
 #include <sys/time.h>
 #include <boost/circular_buffer.hpp>
 #include <boost/random/mersenne_twister.hpp>
