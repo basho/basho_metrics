@@ -38,11 +38,11 @@ template <typename IntType=unsigned long>
 class meter
 {
 public:
-    meter()
+    meter(unsigned int interval)
         : count_(0),
-          one_(alpha_one()),
-          five_(alpha_five()),
-          fifteen_(alpha_fifteen()) { } 
+          one_(alpha_one(), interval),
+          five_(alpha_five(), interval),
+          fifteen_(alpha_fifteen(), interval) { } 
 
 
     /**

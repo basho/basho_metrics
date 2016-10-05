@@ -31,6 +31,9 @@
 #include <cmath>
 #include <ctime>
 #include <cstdlib>
+#include <stdint.h>
+#include <sys/time.h>
+#include <boost/circular_buffer.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 
@@ -183,6 +186,87 @@ private:
     boost::random::uniform_int_distribution<IntType> dist_;
     boost::random::mt19937 gen_;
     const static long RESCALE_THRESHOLD = 60;
+};
+
+
+/**
+ * Sliding sample of a stream of {@code long}s. Operates on fixed-time window,
+ * expired points are simply dropped.
+ */
+template <typename IntType=unsigned long>
+struct sliding_sample
+{
+    sliding_sample(std::size_t size, std::size_t width_in_ms)
+        : size_(size),
+          width_(width_in_ms * 1000),
+          ticks_(size),
+          values_(size)
+    {
+    }
+
+    typedef uint64_t tick_t;
+
+public:
+    void clear()
+    {
+        ticks_.clear();
+        values_.clear();
+    }
+
+    std::size_t size() const
+    {
+        return values_.size();
+    }
+
+    void update(IntType value)
+    {
+        tick_t ts = tick();
+        cut(ts);
+        values_.push_back(value);
+        ticks_.push_back(ts);
+    }
+
+    std::vector<IntType> values() const
+    {
+        std::size_t expired = std::min(expired_before(tick()), size() - 1);
+        return std::vector<IntType>(values_.begin() + expired, values_.end());
+    }
+
+private:
+    tick_t tick() const
+    {
+        timeval tv;
+        if (0 == gettimeofday(&tv, 0)) {
+            return uint64_t(tv.tv_sec) * 1000000 + tv.tv_usec;
+        }
+        return 0;
+    }
+
+    void cut(tick_t ts)
+    {
+        std::size_t cut = expired_before(ts);
+        if (cut) {
+            values_.erase(values_.begin(), values_.begin() + cut);
+            ticks_.erase(ticks_.begin(), ticks_.begin() + cut);
+        }
+    }
+
+    std::size_t expired_before(tick_t ts) const {
+        tick_t cutoff = ts - width_;
+        tick_buffer::const_iterator it = ticks_.begin(), end = ticks_.end();
+        while (it != end && *it < cutoff) {
+            ++it;
+        }
+        return it - ticks_.begin();
+    }
+
+private:
+    std::size_t size_;
+    tick_t width_;
+    typedef boost::circular_buffer<tick_t> tick_buffer;
+    tick_buffer ticks_;
+    boost::circular_buffer<IntType> values_;
+
 };
 
 

@@ -30,6 +30,7 @@
          histogram_stats/1,
          histogram_clear/1,
          meter_new/0,
+         meter_new/1,
          meter_update/2,
          meter_tick/1,
          meter_stats/1]).
@@ -59,6 +60,13 @@
                         {fifteen, integer()} |
                         {count, non_neg_integer()}].
 
+-export_type([histogram/0,
+              meter/0,
+              histogram_stats/0,
+              meter_stats/0,
+              histogram_options/0,
+              meter_options/0]).
+
 nif_stub_error(Line) ->
     erlang:nif_error({nif_not_loaded,module,?MODULE,line,Line}).
 
@@ -67,16 +75,20 @@ nif_stub_error(Line) ->
 -endif.
 
 init() ->
-    PrivDir = case code:priv_dir(?MODULE) of
-                  {error, bad_name} ->
-                      EbinDir = filename:dirname(code:which(?MODULE)),
-                      AppPath = filename:dirname(EbinDir),
-                      filename:join(AppPath, "priv");
-                  Path ->
-                      Path
-              end,
-    erlang:load_nif(filename:join(PrivDir, ?MODULE), 0).
-
+    PrivDir = try
+        {ok, AppName} = application:get_application(?MODULE),
+        case code:priv_dir(AppName) of
+            {error, Reason} ->
+                throw(Reason);
+            Result ->
+                Result
+        end
+    catch _:_ ->
+        EbinDir = filename:dirname(code:which(?MODULE)),
+        AppPath = filename:dirname(EbinDir),
+        filename:join(AppPath, "priv")
+    end,
+    erlang:load_nif(filename:join(PrivDir, ?MODULE_STRING), 0).
 
 -spec histogram_new() -> {ok, histogram()}.
 histogram_new() ->
@@ -126,18 +138,23 @@ meter_tick(_Ref) ->
 close_to(X, N, Delta) ->
     abs(X-N) < Delta.
 
-histogram_test() ->
-    {ok, H} = ?MODULE:histogram_new([{size, 1000}]),
-    [?MODULE:histogram_update(H, I) || I <- lists:seq(1, 10000)],
-    Stats = ?MODULE:histogram_stats(H),
-    ?assertEqual(proplists:get_value(min, Stats), 1),
-    ?assertEqual(proplists:get_value(max, Stats), 10000),
-    ?assertEqual(proplists:get_value(count, Stats),  10000),
-    ?assert(close_to(proplists:get_value(stddev, Stats), 2886, 10)),
-    ?assert(close_to(proplists:get_value(mean, Stats), 5000, 100)),
-    ?assert(close_to(proplists:get_value(p50, Stats), 5000, 100)),
-    ?assert(close_to(proplists:get_value(p95, Stats), 9500, 100)),
-    ?assert(close_to(proplists:get_value(p99, Stats), 9900, 100)).
+histogram_test_() ->
+    {timeout, 60, fun () ->
+      {ok, H} = ?MODULE:histogram_new([{size, 1000}, {window_width, 1000}]),
+      io:format(user, "created~n", []),
+      [begin ?MODULE:histogram_update(H, I), io:format(user, "~p~n", [I]), timer:sleep(5) end || I <- lists:seq(1, 1000)],
+      io:format(user, "filled up~n", []),
+      Stats = ?MODULE:histogram_stats(H),
+      io:format(user, "get stats~n", []),
+      ?assertEqual(proplists:get_value(min, Stats), 1),
+      ?assertEqual(proplists:get_value(max, Stats), 1000),
+      ?assertEqual(proplists:get_value(count, Stats),  1000),
+      ?assert(close_to(proplists:get_value(stddev, Stats), 288, 10)),
+      ?assert(close_to(proplists:get_value(mean, Stats), 500, 10)),
+      ?assert(close_to(proplists:get_value(p50, Stats), 917, 8)),
+      ?assert(close_to(proplists:get_value(p95, Stats), 992, 8)),
+      ?assert(close_to(proplists:get_value(p99, Stats), 999, 8))
+    end}.
 
 -endif.
 

@@ -43,8 +43,9 @@ template <typename IntType=unsigned long>
 class histogram
 {
 public:
-    histogram(std::size_t reservoir_size) 
-    : sample_(reservoir_size), 
+    histogram(std::size_t reservoir_size, std::size_t width_in_seconds) 
+    // : sample_(reservoir_size),
+    : sample_(reservoir_size, width_in_seconds),
       min_(std::numeric_limits<IntType>::max()), 
       max_(std::numeric_limits<IntType>::min()), 
       sum_(0), 
@@ -184,7 +185,8 @@ private:
         }
     }
 private:
-    uniform_sample<IntType> sample_;
+    // uniform_sample<IntType> sample_;
+    sliding_sample<IntType> sample_;
     IntType min_;
     IntType max_;
     IntType sum_;
